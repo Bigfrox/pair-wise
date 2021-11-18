@@ -171,9 +171,9 @@ def getDataFromGAF(filename, BP, MF):
     return BP, MF
 
 
-def GetPPI(file, annotation_BP, annotation_MF, ontology_BP, ontology_MF,start_position):
+def GetPPI(filename, annotation_BP, annotation_MF, ontology_BP, ontology_MF,start_position):
     global global_gene_sim
-    
+    file = open(filename, "r")
     #fileopen
     line_count = 0
     total_line = 159567
@@ -190,12 +190,15 @@ def GetPPI(file, annotation_BP, annotation_MF, ontology_BP, ontology_MF,start_po
         if line_count % int(total_line / 100) == 0:
             print("Progress : {0}%".format(round(line_count * 100 / total_line, 3)))
             # print("line : ", line)
+    
         line = file.readline().split()
         
         # * for threading
         for _ in range(10-1):
-            file.readline()
-
+            tmp_line = file.readline()
+            if not tmp_line:
+                break
+        print("Thread ", start_position, end =" ")
         print("line : ", line)
         if not line:
             break
@@ -335,8 +338,9 @@ def GetPPI(file, annotation_BP, annotation_MF, ontology_BP, ontology_MF,start_po
         similarity = BMA
         gene_sim.append([gene1, gene2, similarity])
         # * gene_sim += node_based_method(gene1,gene2,gene1_BP,gene2_BP,gene1_MF,gene2_MF,ontology_BP,ontology_MF)
-
+    
     global_gene_sim += gene_sim
+    file.close()
     #return gene_sim
 
 
@@ -694,12 +698,12 @@ def main():
     global_gene_sim = list()
 
     
-    file_PPI = open(input_filename3, "r")
+    #!file_PPI = open(input_filename3, "r")
     threads = []
     print("PPI READ start")
     for start_pos in range(10):
         print("Thread ", start_pos, " START ")
-        t = threading.Thread(target=GetPPI,args=(file_PPI, BP_annotation, MF_annotation, ontology_BP, ontology_MF, start_pos))
+        t = threading.Thread(target=GetPPI,args=(input_filename3, BP_annotation, MF_annotation, ontology_BP, ontology_MF, start_pos))
         t.start()
         threads.append(t)
     
@@ -718,7 +722,7 @@ def main():
     # for proc in process_:
     #     proc.join()
     
-    file_PPI.close()
+    #!file_PPI.close()
 
     similarity = list()
     for v in global_gene_sim:

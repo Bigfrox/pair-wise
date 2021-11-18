@@ -173,7 +173,7 @@ def getDataFromGAF(filename, BP, MF):
 
 def GetPPI(file, annotation_BP, annotation_MF, ontology_BP, ontology_MF,start_position):
     global global_gene_sim
-    print("[*] Start ")
+    
     #fileopen
     line_count = 0
     total_line = 159567
@@ -196,7 +196,7 @@ def GetPPI(file, annotation_BP, annotation_MF, ontology_BP, ontology_MF,start_po
         for _ in range(10-1):
             file.readline()
 
-        #print("line : ", line)
+        print("line : ", line)
         if not line:
             break
         gene1 = line[0]
@@ -539,7 +539,9 @@ def inferred(ontology,annotation,total_length,root_node):
     print("[*]inferred end")    
 
 
-def GetTotalLengthOfGenes(annotation,root_node):
+def GetTotalLengthOfGenes(annotation,root_node,root_BP,root_MF):
+    
+
     gene_set_ = set()
     for term in annotation:
         gene_set_ = gene_set_.union(annotation[term])
@@ -630,34 +632,37 @@ def main():
     print("=========================================================================")
     print("length of BP_annotation : ", len(BP_annotation))
     print("length of MF_annotation : ", len(MF_annotation))
-
+    global MF_gene_set_length
+    global BP_gene_set_length
     
     
-    # threads = []
-    # t1 = threading.Thread(target=GetTotalLengthOfGenes(MF_annotation,root_MF))
-    # t1.start()
-    # threads.append(t1)
+    threads = []
+    t1 = threading.Thread(target=GetTotalLengthOfGenes,args=(MF_annotation,root_MF,root_BP,root_MF))
+    t1.start()
+    threads.append(t1)
     
-    # t2 = threading.Thread(target=GetTotalLengthOfGenes(BP_annotation,root_BP))
-    # t2.start()
-    # threads.append(t2)
+    t2 = threading.Thread(target=GetTotalLengthOfGenes,args=(BP_annotation,root_BP,root_BP,root_MF))
+    t2.start()
+    threads.append(t2)
 
-    # for thread in threads:
-    #     thread.join()
+    for thread in threads:
+        thread.join()
+    
 
-    process_ = []
-    p1 = multiprocessing.Process(target=GetTotalLengthOfGenes(MF_annotation,root_MF))
-    p2 = multiprocessing.Process(target=GetTotalLengthOfGenes(BP_annotation,root_BP))
 
-    p1.start()
-    p2.start()
+    # process_ = []
+    # p1 = multiprocessing.Process(target=GetTotalLengthOfGenes,args=(MF_annotation,root_MF,root_BP,root_MF))
+    # p2 = multiprocessing.Process(target=GetTotalLengthOfGenes,args=(BP_annotation,root_BP,root_BP,root_MF))
 
-    process_.append(p1)
-    process_.append(p2)
+    # p1.start()
+    # p2.start()
 
-    for proc in process_:
-        proc.join()
+    # process_.append(p1)
+    # process_.append(p2)
 
+    # for proc in process_:
+    #     proc.join()
+    
     print("MF_gene_set_length : ", MF_gene_set_length)
     print("BP_gene_set_length : ", BP_gene_set_length)
 
@@ -667,11 +672,11 @@ def main():
 
     # * inferred
     threads = []
-    t1 = threading.Thread(target=inferred(ontology_BP,BP_annotation,BP_gene_set_length,root_BP))
+    t1 = threading.Thread(target=inferred,args=(ontology_BP,BP_annotation,BP_gene_set_length,root_BP))
     t1.start()
     threads.append(t1)
     
-    t2 = threading.Thread(target=inferred(ontology_MF,MF_annotation,MF_gene_set_length,root_MF))
+    t2 = threading.Thread(target=inferred,args=(ontology_MF,MF_annotation,MF_gene_set_length,root_MF))
     t2.start()
     threads.append(t2)
 
@@ -688,27 +693,30 @@ def main():
     global global_gene_sim
     global_gene_sim = list()
 
-    # threads = []
-    # print("PPI READ start")
-    # for start_pos in range(10):
-    #     print("Thread ", start_pos, " START ")
-    #     t = threading.Thread(target=GetPPI(input_filename3, BP_annotation, MF_annotation, ontology_BP, ontology_MF, start_pos))
-    #     t.start()
-    #     threads.append(t)
     
-    # for thread in threads:
-    #     thread.join()
-    # print("PPI READ end")
     file_PPI = open(input_filename3, "r")
-    process_ = []
+    threads = []
+    print("PPI READ start")
     for start_pos in range(10):
-        print("Process ", start_pos, " START ")
-        p = multiprocessing.Process(target=GetPPI(file_PPI, BP_annotation, MF_annotation, ontology_BP, ontology_MF, start_pos))
-        p.start()
-        process_.append(p)
+        print("Thread ", start_pos, " START ")
+        t = threading.Thread(target=GetPPI,args=(file_PPI, BP_annotation, MF_annotation, ontology_BP, ontology_MF, start_pos))
+        t.start()
+        threads.append(t)
     
-    for proc in process_:
-        proc.join()
+    for thread in threads:
+        thread.join()
+    print("PPI READ end")
+    
+    
+    # process_ = []
+    # for start_pos in range(10):
+    #     print("Process ", start_pos, " START ")
+    #     p = multiprocessing.Process(target=GetPPI, args=(file_PPI, BP_annotation, MF_annotation, ontology_BP, ontology_MF, start_pos))
+    #     p.start()
+    #     process_.append(p)
+    
+    # for proc in process_:
+    #     proc.join()
     
     file_PPI.close()
 
